@@ -64,9 +64,11 @@ class TaskBottomSheetState extends State<TaskBottomSheet> {
                               task: _currentTask,
                             ),
                           ),
-                        ).then((task) => setState(() {
-                              if (task != null) _currentTask = task;
-                            }));
+                        )
+                            .then((task) => setState(() {
+                                  if (task != null) _currentTask = task;
+                                }))
+                            .whenComplete(() => widget.onEdit());
                       },
                       icon: Icon(Icons.edit)),
                 ],
