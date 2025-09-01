@@ -64,10 +64,9 @@ class TaskBottomSheetState extends State<TaskBottomSheet> {
                               task: _currentTask,
                             ),
                           ),
-                        )
-                            .then((task) => setState(() {
-                                  if (task != null) _currentTask = task;
-                                }));
+                        ).then((task) => setState(() {
+                              if (task != null) _currentTask = task;
+                            }));
                       },
                       icon: Icon(Icons.edit)),
                 ],

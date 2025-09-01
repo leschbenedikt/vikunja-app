@@ -100,8 +100,7 @@ class TaskTileState extends State<TaskTile> with AutomaticKeepAliveClientMixin {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
               ),
               builder: (BuildContext context) {
-                return TaskBottomSheet(
-                    task: widget.task);
+                return TaskBottomSheet(task: widget.task);
               });
         },
         title: widget.showInfo
