@@ -56,6 +56,10 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     _description = widget.task.description;
     _color = widget.task.color;
 
+    _dueDate = widget.task.dueDate;
+    _startDate = widget.task.startDate;
+    _endDate = widget.task.endDate;
+
     super.initState();
   }
 
