@@ -614,13 +614,10 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return TaskSaveDialog(() {
+        return TaskSaveDialog(onConfirm: () {
           Navigator.pop(context);
-          // make sure the list is refreshed
           Navigator.pop(context);
-        }, () {
-          Navigator.pop(context);
-          // make sure the list is refreshed
+        }, onCancel: () {
           Navigator.pop(context);
         });
       },
