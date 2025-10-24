@@ -16,7 +16,6 @@ class MainActivity : FlutterActivity() {
     private val CHANNEL = "vikunja"
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.e("TAG", "test");
         super.onCreate(savedInstanceState);
     }
 

@@ -9,6 +9,15 @@ import 'package:vikunja_app/data/models/task_dto.dart';
 class TaskDataSource extends RemoteDataSource {
   TaskDataSource(super.client);
 
+  Future<Response<TaskDto>> get(int id) {
+    return client.get(
+      url: '/tasks/${id}',
+      mapper: (body) {
+        return TaskDto.fromJson(body);
+      },
+    );
+  }
+
   Future<Response<TaskDto>> add(int projectId, TaskDto task) {
     return client.put(
       url: '/projects/$projectId/tasks',

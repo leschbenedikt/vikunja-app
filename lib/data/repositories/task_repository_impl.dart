@@ -17,6 +17,11 @@ class TaskRepositoryImpl extends TaskRepository {
   TaskRepositoryImpl(this._dataSource);
 
   @override
+  Future<Response<Task>> get(int id) async {
+    return (await _dataSource.get(id)).toDomain();
+  }
+
+  @override
   Future<Response<Task>> add(int projectId, Task task) async {
     return (await _dataSource.add(
       projectId,
