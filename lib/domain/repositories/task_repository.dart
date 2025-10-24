@@ -7,6 +7,8 @@ import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/domain/entities/task_attachment.dart';
 
 abstract class TaskRepository {
+  Future<Response<Task>> get(int id);
+
   Future<Response<Task>> add(int projectId, Task task);
 
   Future delete(int taskId);
