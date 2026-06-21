@@ -11,7 +11,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:home_widget/home_widget.dart' show HomeWidget;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:sentry_logging/sentry_logging.dart';
 import 'package:vikunja_app/l10n/gen/app_localizations.dart';
@@ -19,6 +18,7 @@ import 'package:vikunja_app/core/di/theme_provider.dart';
 import 'package:vikunja_app/core/di/locale_provider.dart';
 import 'package:vikunja_app/data/data_sources/settings_data_source.dart';
 import 'package:vikunja_app/init_page.dart';
+import 'package:vikunja_app/presentation/manager/notifications.dart';
 import 'package:vikunja_app/presentation/pages/home_page.dart';
 import 'package:vikunja_app/presentation/pages/login/login_page.dart';
 import 'package:workmanager/workmanager.dart';
@@ -43,10 +43,7 @@ const _ignoredNetworkErrors = [
 void main() async {
   SentryWidgetsFlutterBinding.ensureInitialized();
 
-  var notifDenies = await Permission.notification.isDenied;
-  if (notifDenies) {
-    Permission.notification.request();
-  }
+  await NotificationHandler().requestPermissions();
 
   // Shared settings datasource for reading app settings
   final settingsDatasource = SettingsDatasource(FlutterSecureStorage());

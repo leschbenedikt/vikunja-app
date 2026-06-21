@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:vikunja_app/core/network/client.dart';
 import 'package:vikunja_app/data/data_sources/settings_data_source.dart';
@@ -66,8 +67,11 @@ Future<bool> updateTasks() async {
   await updateWidget();
 
   NotificationHandler notificationHandler = NotificationHandler();
-  await notificationHandler.initNotifications();
-  await notificationHandler.scheduleDueNotifications(taskService);
+  var notifGranted = await Permission.notification.isGranted;
+  if (notifGranted) {
+    await notificationHandler.initNotifications();
+    await notificationHandler.scheduleDueNotifications(taskService);
+  }
 
   return Future.value(true);
 }

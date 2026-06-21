@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
@@ -98,6 +99,14 @@ class NotificationHandler {
 
   NotificationHandler();
 
+  Future<void> requestPermissions() async {
+    if (Platform.isIOS) {
+      await requestIOSPermissions();
+    } else if (Platform.isAndroid) {
+      await requestAndroidPermissions();
+    }
+  }
+
   Future<void> initNotifications() async {
     iOSSpecifics = DarwinNotificationDetails(
       categoryIdentifier: 'doneCategory',
@@ -110,28 +119,6 @@ class NotificationHandler {
       android: androidSpecificsReminders,
       iOS: iOSSpecifics,
     );
-    await _initNotifications();
-
-    initBackgroundCommunication();
-
-    requestIOSPermissions();
-    await _requestAndroidExactAlarmPermission();
-  }
-
-  Future<void> _requestAndroidExactAlarmPermission() async {
-    final androidPlugin = notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-    if (androidPlugin == null) return;
-
-    final canSchedule = await androidPlugin.canScheduleExactNotifications();
-    if (canSchedule != true) {
-      await androidPlugin.requestExactAlarmsPermission();
-    }
-  }
-
-  Future<void> _initNotifications() async {
     var initializationSettingsAndroid = AndroidInitializationSettings(
       'vikunja_logo',
     );
@@ -157,6 +144,8 @@ class NotificationHandler {
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
     developer.log("Notifications initialised successfully");
+
+    initBackgroundCommunication();
   }
 
   void initBackgroundCommunication() {
@@ -183,9 +172,11 @@ class NotificationHandler {
     String description,
     FlutterLocalNotificationsPlugin notifsPlugin,
     DateTime scheduledTime,
-    String currentTimeZone,
     NotificationDetails platformChannelSpecifics,
+    AndroidScheduleMode mode,
   ) async {
+    var currentTimeZone = await FlutterTimezone.getLocalTimezone();
+
     tz.TZDateTime time = tz.TZDateTime.from(
       scheduledTime,
       tz.getLocation(currentTimeZone),
@@ -204,7 +195,7 @@ class NotificationHandler {
       body: description,
       scheduledDate: time,
       notificationDetails: platformChannelSpecifics,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: mode,
       payload: id.toString(),
     );
   }
@@ -218,12 +209,28 @@ class NotificationHandler {
     );
   }
 
-  void requestIOSPermissions() {
-    notificationsPlugin
+  Future<void> requestIOSPermissions() async {
+    await notificationsPlugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+
+  Future<void> requestAndroidPermissions() async {
+    final androidPlugin = notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    if (androidPlugin == null) return;
+
+    await androidPlugin.requestNotificationsPermission();
+
+    final canSchedule = await androidPlugin.canScheduleExactNotifications();
+    if (canSchedule != true) {
+      await androidPlugin.requestExactAlarmsPermission();
+    }
   }
 
   Future<void> scheduleDueNotifications(TaskRepository taskService) async {
@@ -233,6 +240,19 @@ class NotificationHandler {
         "filter_include_nulls": ["false"],
       },
     );
+
+    final androidPlugin = notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    AndroidScheduleMode mode = AndroidScheduleMode.inexactAllowWhileIdle;
+    if (androidPlugin != null) {
+      final canSchedule = await androidPlugin.canScheduleExactNotifications();
+      if (canSchedule == true) {
+        mode = AndroidScheduleMode.exactAllowWhileIdle;
+      }
+    }
 
     if (taskResponse.isSuccessful) {
       await notificationsPlugin.cancelAll();
@@ -245,8 +265,8 @@ class NotificationHandler {
             "This is your reminder for '${task.title}'",
             notificationsPlugin,
             reminder.reminder,
-            await FlutterTimezone.getLocalTimezone(),
             platformChannelSpecificsReminders,
+            mode,
           );
         }
         if (task.hasDueDate) {
@@ -256,8 +276,8 @@ class NotificationHandler {
             "The task '${task.title}' is due.",
             notificationsPlugin,
             task.dueDate!,
-            await FlutterTimezone.getLocalTimezone(),
             platformChannelSpecificsDueDate,
+            mode,
           );
         }
       }
