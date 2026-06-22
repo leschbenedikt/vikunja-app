@@ -19,6 +19,8 @@ import 'package:vikunja_app/presentation/pages/error_widget.dart';
 import 'package:vikunja_app/presentation/pages/loading_widget.dart';
 import 'package:vikunja_app/presentation/pages/login/login_page.dart';
 
+import '../manager/notifications.dart';
+
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
@@ -191,7 +193,15 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   } else {
                     var status = await Permission.notification.request();
                     if (status.isGranted) {
-                      ref.read(notificationProvider)?.sendTestNotification();
+                      var notificationHandler = NotificationHandler();
+                      await notificationHandler.initNotifications();
+                      ref
+                          .read(notificationProvider.notifier)
+                          .set(notificationHandler);
+                      await notificationHandler.scheduleNotifications(
+                        ref.read(taskRepositoryProvider),
+                      );
+                      notificationHandler.sendTestNotification();
                     } else if (status.isPermanentlyDenied && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(l10n.noNotificationPermission)),

@@ -241,6 +241,10 @@ class HomePageState extends ConsumerState<HomePage> {
 
       ref.read(notificationProvider.notifier).set(notificationHandler);
       _notificationHandler = notificationHandler;
+
+      await notificationHandler.scheduleNotifications(
+        ref.read(taskRepositoryProvider),
+      );
     }
   }
 
