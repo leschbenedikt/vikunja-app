@@ -368,10 +368,10 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
             _reminderDates?.map((e) {
               return VikunjaDateTimeField(
                 label: AppLocalizations.of(context).reminder,
-                initialValue: e.reminder,
+                initialValue: e.dateTime,
                 onChanged: (date) {
                   if (date != null) {
-                    e.reminder = date;
+                    e.dateTime = date;
                   } else {
                     _reminderDates?.remove(e);
                   }
@@ -757,7 +757,7 @@ class TaskEditPageState extends ConsumerState<TaskEditPage> {
 
     try {
       // Removes all reminders with no value set.
-      _reminderDates?.removeWhere((d) => d.reminder == DateTime(0));
+      _reminderDates?.removeWhere((d) => d.dateTime == DateTime(0));
 
       final updatedTask =
           widget.task.copyWith(

@@ -27,5 +27,5 @@ class TaskReminderDto extends Dto<TaskReminder> {
   TaskReminder toDomain() => TaskReminder(reminder, relativePeriod, relativeTo);
 
   static TaskReminderDto fromDomain(TaskReminder b) =>
-      TaskReminderDto(b.reminder, b.relativePeriod, b.relativeTo);
+      TaskReminderDto(b.dateTime, b.relativePeriod, b.relativeTo);
 }

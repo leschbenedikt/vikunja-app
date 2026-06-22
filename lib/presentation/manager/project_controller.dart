@@ -243,7 +243,7 @@ class ProjectController extends _$ProjectController with PaginationMixin<Task> {
 
         ref
             .read(notificationProvider)
-            ?.scheduleDueNotifications(ref.read(taskRepositoryProvider));
+            ?.scheduleNotifications(ref.read(taskRepositoryProvider));
 
         return true;
       }

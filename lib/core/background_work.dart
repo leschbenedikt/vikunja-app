@@ -70,7 +70,7 @@ Future<bool> updateTasks() async {
   var notifGranted = await Permission.notification.isGranted;
   if (notifGranted) {
     await notificationHandler.initNotifications();
-    await notificationHandler.scheduleDueNotifications(taskService);
+    await notificationHandler.scheduleNotifications(taskService);
   }
 
   return Future.value(true);

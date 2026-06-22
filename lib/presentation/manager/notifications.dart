@@ -12,7 +12,9 @@ import 'package:vikunja_app/core/network/client.dart';
 import 'package:vikunja_app/data/data_sources/settings_data_source.dart';
 import 'package:vikunja_app/data/data_sources/task_data_source.dart';
 import 'package:vikunja_app/data/repositories/task_repository_impl.dart';
+import 'package:vikunja_app/domain/entities/task.dart';
 import 'package:vikunja_app/domain/repositories/task_repository.dart';
+import 'package:vikunja_app/presentation/manager/pagination_mixin.dart';
 import 'package:vikunja_app/presentation/manager/widget_controller.dart';
 
 const _actionDonePortName = 'action_done_port_name';
@@ -23,10 +25,13 @@ Future<void> notificationTapBackground(
   NotificationResponse notificationResponse,
 ) async {
   if (notificationResponse.actionId == _notificationActionDone) {
-    var id = notificationResponse.id;
+    var payload = notificationResponse.payload;
 
-    if (id != null) {
-      await markAsDone(id);
+    if (payload != null) {
+      var id = int.tryParse(payload);
+      if (id != null) {
+        await markAsDone(id);
+      }
     }
   }
 }
@@ -173,8 +178,9 @@ class NotificationHandler {
     FlutterLocalNotificationsPlugin notifsPlugin,
     DateTime scheduledTime,
     NotificationDetails platformChannelSpecifics,
-    AndroidScheduleMode mode,
-  ) async {
+    AndroidScheduleMode mode, {
+    String? payload,
+  }) async {
     var currentTimeZone = await FlutterTimezone.getLocalTimezone();
 
     tz.TZDateTime time = tz.TZDateTime.from(
@@ -187,7 +193,7 @@ class NotificationHandler {
       return;
     }
 
-    developer.log("scheduled notification for time $time");
+    developer.log("scheduled notification for time $time with id $id and payload $payload");
 
     await notifsPlugin.zonedSchedule(
       id: id,
@@ -196,7 +202,7 @@ class NotificationHandler {
       scheduledDate: time,
       notificationDetails: platformChannelSpecifics,
       androidScheduleMode: mode,
-      payload: id.toString(),
+      payload: payload ?? id.toString(),
     );
   }
 
@@ -233,13 +239,49 @@ class NotificationHandler {
     }
   }
 
-  Future<void> scheduleDueNotifications(TaskRepository taskService) async {
-    var taskResponse = await taskService.getByFilterString(
-      "done=false && (due_date > now || reminders > now)",
-      {
-        "filter_include_nulls": ["false"],
-      },
-    );
+  Future<void> scheduleNotifications(TaskRepository taskService) async {
+    List<Task> allTasks = [];
+    int currentPage = 1;
+    bool hasMore = true;
+
+    while (hasMore) {
+      var taskResponse = await taskService.getByFilterString(
+        "done=false && (due_date > now || reminders > now)",
+        {
+          "filter_include_nulls": ["false"],
+          "page": [currentPage.toString()],
+        },
+      );
+
+      if (taskResponse.isSuccessful) {
+        var tasks = taskResponse.toSuccess().body;
+        if (tasks.isEmpty) {
+          hasMore = false;
+        } else {
+          allTasks.addAll(tasks);
+          currentPage++;
+
+          var headers = taskResponse.toSuccess().headers;
+          var totalPagesStr = headers[PaginationMixin.paginationHeader] ??
+              headers[PaginationMixin.paginationHeader];
+          if (totalPagesStr != null) {
+            int? totalPages = int.tryParse(totalPagesStr);
+            if (totalPages != null && currentPage > totalPages) {
+              hasMore = false;
+            }
+          }
+        }
+      } else {
+        hasMore = false;
+      }
+
+      // Safety break to prevent infinite loops and hitting system limits
+      // Android generally limits to 500 scheduled alarms.
+      if (allTasks.length > 450) {
+        allTasks = allTasks.sublist(0, 450);
+        hasMore = false;
+      }
+    }
 
     final androidPlugin = notificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -254,19 +296,22 @@ class NotificationHandler {
       }
     }
 
-    if (taskResponse.isSuccessful) {
+    if (allTasks.isNotEmpty) {
       await notificationsPlugin.cancelAll();
-      for (final task in taskResponse.toSuccess().body) {
+      for (final task in allTasks) {
         if (task.done) continue;
-        for (final reminder in task.reminderDates) {
+        for (var i = 0; i < task.reminderDates.length; i++) {
+          final reminder = task.reminderDates[i];
+          int notificationId = task.getReminderNotificationId(reminder.dateTime);
           await scheduleNotification(
-            (reminder.reminder.millisecondsSinceEpoch / 1000).floor(),
+            notificationId,
             "Reminder",
             "This is your reminder for '${task.title}'",
             notificationsPlugin,
-            reminder.reminder,
+            reminder.dateTime,
             platformChannelSpecificsReminders,
             mode,
+            payload: task.id.toString(),
           );
         }
         if (task.hasDueDate) {
@@ -278,6 +323,7 @@ class NotificationHandler {
             task.dueDate!,
             platformChannelSpecificsDueDate,
             mode,
+            payload: task.id.toString(),
           );
         }
       }

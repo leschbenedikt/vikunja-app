@@ -91,9 +91,7 @@ class TaskPageController extends _$TaskPageController
     _setProjectOfTask(projectsResponse, tasks);
 
     updateWidget();
-    ref
-        .read(notificationProvider)
-        ?.scheduleDueNotifications(ref.read(taskRepositoryProvider));
+    scheduleNotifications();
 
     var showOnlyDueDateTasks = await ref
         .read(settingsRepositoryProvider)
@@ -217,5 +215,11 @@ class TaskPageController extends _$TaskPageController
     }
 
     return false;
+  }
+
+  void scheduleNotifications() {
+    ref
+        .read(notificationProvider)
+        ?.scheduleNotifications(ref.read(taskRepositoryProvider));
   }
 }

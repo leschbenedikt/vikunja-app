@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:vikunja_app/core/network/response.dart';
 
 mixin PaginationMixin<T> {
+  static const paginationHeader = 'x-pagination-total-pages';
+
   int _currentPage = 1;
   int _totalPages = 1;
   bool loadingNextPage = false;
@@ -17,7 +19,7 @@ mixin PaginationMixin<T> {
       (key, value) => MapEntry(key.toLowerCase(), value),
     );
     _totalPages =
-        int.tryParse(checkHeaders['x-pagination-total-pages'] ?? '1') ?? 1;
+        int.tryParse(checkHeaders[paginationHeader] ?? '1') ?? 1;
   }
 
   Future<void> loadMoreItems({
