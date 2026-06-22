@@ -336,7 +336,11 @@ class _BucketColumnState extends ConsumerState<BucketColumn> {
     );
   }
 
-  Future<void> _addItem(String title, DateTime? dueDate, BuildContext context) async {
+  Future<void> _addItem(
+    String title,
+    DateTime? dueDate,
+    BuildContext context,
+  ) async {
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null) {
       return;

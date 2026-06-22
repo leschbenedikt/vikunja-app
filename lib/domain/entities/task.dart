@@ -67,7 +67,7 @@ class Task {
 
   bool get hasEndDate => endDate != null && endDate?.year != 1;
 
-  int getReminderNotificationId(DateTime dateTime){
+  int getReminderNotificationId(DateTime dateTime) {
     return Object.hash(id, dateTime.millisecondsSinceEpoch) & 0x7FFFFFFF;
   }
 

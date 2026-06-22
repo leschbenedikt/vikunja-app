@@ -18,8 +18,7 @@ mixin PaginationMixin<T> {
     var checkHeaders = headers.map(
       (key, value) => MapEntry(key.toLowerCase(), value),
     );
-    _totalPages =
-        int.tryParse(checkHeaders[paginationHeader] ?? '1') ?? 1;
+    _totalPages = int.tryParse(checkHeaders[paginationHeader] ?? '1') ?? 1;
   }
 
   Future<void> loadMoreItems({
