@@ -193,7 +193,9 @@ class NotificationHandler {
       return;
     }
 
-    developer.log("scheduled notification for time $time with id $id and payload $payload");
+    developer.log(
+      "scheduled notification for time $time with id $id and payload $payload",
+    );
 
     await notifsPlugin.zonedSchedule(
       id: id,
@@ -262,7 +264,8 @@ class NotificationHandler {
           currentPage++;
 
           var headers = taskResponse.toSuccess().headers;
-          var totalPagesStr = headers[PaginationMixin.paginationHeader] ??
+          var totalPagesStr =
+              headers[PaginationMixin.paginationHeader] ??
               headers[PaginationMixin.paginationHeader];
           if (totalPagesStr != null) {
             int? totalPages = int.tryParse(totalPagesStr);
@@ -272,7 +275,10 @@ class NotificationHandler {
           }
         }
       } else {
-        hasMore = false;
+        developer.log(
+          "Failed to fetch tasks for notifications, keeping existing notifications",
+        );
+        return;
       }
 
       // Safety break to prevent infinite loops and hitting system limits
@@ -296,13 +302,15 @@ class NotificationHandler {
       }
     }
 
+    await notificationsPlugin.cancelAll();
     if (allTasks.isNotEmpty) {
-      await notificationsPlugin.cancelAll();
       for (final task in allTasks) {
         if (task.done) continue;
         for (var i = 0; i < task.reminderDates.length; i++) {
           final reminder = task.reminderDates[i];
-          int notificationId = task.getReminderNotificationId(reminder.dateTime);
+          int notificationId = task.getReminderNotificationId(
+            reminder.dateTime,
+          );
           await scheduleNotification(
             notificationId,
             "Reminder",
