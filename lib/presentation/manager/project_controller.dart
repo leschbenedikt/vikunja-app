@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vikunja_app/core/di/notification_provider.dart';
 import 'package:vikunja_app/core/di/repository_provider.dart';
 import 'package:vikunja_app/core/network/response.dart';
 import 'package:vikunja_app/domain/entities/bucket.dart';
@@ -239,6 +240,10 @@ class ProjectController extends _$ProjectController with PaginationMixin<Task> {
         var tasks = value.tasks;
         tasks.add(response.toSuccess().body);
         state = AsyncData(value.copyWith(tasks: tasks));
+
+        ref
+            .read(notificationProvider)
+            ?.scheduleDueNotifications(ref.read(taskRepositoryProvider));
 
         return true;
       }
