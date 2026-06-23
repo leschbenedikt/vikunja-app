@@ -191,18 +191,18 @@ class SettingsPageState extends ConsumerState<SettingsPage> {
                   if (notifGranted) {
                     ref.read(notificationProvider)?.sendTestNotification();
                   } else {
-                    var status = await Permission.notification.request();
-                    if (status.isGranted) {
-                      var notificationHandler = NotificationHandler();
+                    var notificationHandler = NotificationHandler();
+                    ref
+                        .read(notificationProvider.notifier)
+                        .set(notificationHandler);
+                    var status = await notificationHandler.requestPermissions();
+                    if (status == true) {
                       await notificationHandler.initNotifications();
-                      ref
-                          .read(notificationProvider.notifier)
-                          .set(notificationHandler);
                       await notificationHandler.scheduleNotifications(
                         ref.read(taskRepositoryProvider),
                       );
                       notificationHandler.sendTestNotification();
-                    } else if (status.isPermanentlyDenied && context.mounted) {
+                    } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(l10n.noNotificationPermission)),
                       );

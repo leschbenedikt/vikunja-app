@@ -104,12 +104,13 @@ class NotificationHandler {
 
   NotificationHandler();
 
-  Future<void> requestPermissions() async {
+  Future<bool?> requestPermissions() async {
     if (Platform.isIOS) {
-      await requestIOSPermissions();
+      return requestIOSPermissions();
     } else if (Platform.isAndroid) {
-      await requestAndroidPermissions();
+      return requestAndroidPermissions();
     }
+    return null;
   }
 
   Future<void> initNotifications() async {
@@ -217,28 +218,32 @@ class NotificationHandler {
     );
   }
 
-  Future<void> requestIOSPermissions() async {
-    await notificationsPlugin
+  Future<bool?> requestIOSPermissions() async {
+    return notificationsPlugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  Future<void> requestAndroidPermissions() async {
+  Future<bool?> requestAndroidPermissions() async {
     final androidPlugin = notificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
 
-    if (androidPlugin == null) return;
+    if (androidPlugin == null) return null;
 
-    await androidPlugin.requestNotificationsPermission();
+    bool? granted = await androidPlugin.requestNotificationsPermission();
 
-    final canSchedule = await androidPlugin.canScheduleExactNotifications();
-    if (canSchedule != true) {
-      await androidPlugin.requestExactAlarmsPermission();
+    if (granted == true) {
+      final canSchedule = await androidPlugin.canScheduleExactNotifications();
+      if (canSchedule != true) {
+        await androidPlugin.requestExactAlarmsPermission();
+      }
     }
+
+    return granted;
   }
 
   Future<void> scheduleNotifications(TaskRepository taskService) async {
