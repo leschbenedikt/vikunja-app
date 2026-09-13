@@ -45,8 +45,13 @@ class WidgetConfigureActivity : Activity() {
 
         val projectsJson = prefs.getString("WidgetProjects", null)
         if (projectsJson != null) {
-            val type = object : TypeToken<List<WidgetProject>>() {}.type
-            projects = Gson().fromJson(projectsJson, type) ?: emptyList()
+            try {
+                val type = object : TypeToken<List<WidgetProject>>() {}.type
+                val parsed: List<WidgetProject>? = Gson().fromJson(projectsJson, type)
+                projects = parsed?.filterIsInstance<WidgetProject>() ?: emptyList()
+            } catch (e: Exception) {
+                projects = emptyList()
+            }
         }
 
         val currentView = prefs.getString("widget_view_$appWidgetId", "today") ?: "today"
